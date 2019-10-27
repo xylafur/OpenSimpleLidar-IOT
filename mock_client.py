@@ -15,7 +15,7 @@ def convert_from_bytes(obj):
 
 TCP_IP = '127.0.0.1'
 TCP_PORT = 5005
-BUFFER_SIZE = 20
+BUFFER_SIZE = 4096
 MESSAGE = "Hello World!"
 
 data = None
@@ -29,6 +29,7 @@ while 1:
     try:
         data = s.recv(BUFFER_SIZE)
         print("Got data: {!r}".format(data))
+        print("{} bytes".format(len(data)))
     finally:
         print("Closing socket")
         s.close()

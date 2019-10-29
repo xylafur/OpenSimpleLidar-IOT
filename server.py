@@ -37,35 +37,6 @@ def get_data_from_buffer():
 #   Functions to read from LIDAR
 ###############################################################################
 """
-    The data recieved from the LIDAR is in polar form.  We know the starting angle and then we get
-    360 distance points.  Each of these points is 1 degree after the last
-
-    Here is the function used to convert a data point to distance in meters
-    angular_corr=5
-    coef_a=3.67E-05
-    coef_b=0.417
-    base_length=5.8
-    double curr_base_length = 5.8;
-
-
-    double ConvertToLength(int pixel)
-    {
-        double dist2 = 0;//value in cm
-
-        pixel = pixel & 16383;
-
-        if (pixel > 50)
-        {
-            dist2 = (-curr_base_length) / Math.Tan((double)(pixel) * curr_coeff_a - curr_coeff_b);
-        }
-        else
-            dist2 = 0;
-
-        return dist2 / 100.0;//convert to meters
-    }
-"""
-
-"""
     const int BUFFER_LENGTH = 400;
     const int TOTAL_POINTS  = 362;
     int header_counter = 0;
@@ -173,6 +144,16 @@ def convert_distance_to_lidar_point(distance_m):
 import math
 import random
 
+
+"""
+    LabView Packet Format
+        
+
+    NOTE:
+        I originally thought that we could transmit the data already converted to x y coordinates,
+        but that coule involve 
+"""
+
 class FakeLidar:
     """
         This class is meant to mimic the LIDAR that we will be intefacing with over serial.
@@ -192,9 +173,10 @@ class FakeLidar:
         header = [0xAA, 0xBB, 0xCC, 0xDD]
         # I don't think that the status flags are used for anything..
         status = [0x00, 0x00]
-        rotation = [(rotation_period_ms & (0xFF<<8))>>8, rotation_period_ms & 0xFF]
+        rotation = [(rotation_period_ms & 0xFF00)>>8, rotation_period_ms & 0xFF]
         distances = []
         for dist in range(360):
+            # Each lindar data point is 2 bytes
             dist = convert_distance_to_lidar_point(radius)
             distances.append(dist & 0xFF)
             distances.append((dist & 0xFF00)>>8)
@@ -229,6 +211,9 @@ def get_serial_device(device, baud, timeout, mock):
         return FakeLidar(device, baud, timeout)
     raise NotImplementedError("Currently only support MockLidar!")
 
+def close_device(device):
+    pass
+
 def lidar_main(args):
     # Eventually I think we will have to add windows support
     device = get_serial_device(args.device, args.baud, args.serial_timeout, args.mock)
@@ -237,7 +222,7 @@ def lidar_main(args):
         while running:
             queue_data(get_data(device))
     finally:
-        pass
+        close_device(device)
 
 
 ###############################################################################

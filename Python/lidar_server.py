@@ -1,4 +1,4 @@
-"""
+"(rotation_period_ms & 0xFF00)>>8""
     Lidar Packet Info:
         This data protocol is used by "lidar4_main_code" firmware. Single data packet consists of parts:
 
@@ -37,7 +37,7 @@ def get_data_from_buffer():
 #   Functions to read from LIDAR
 ###############################################################################
 """
-    const int BUFFER_LENGTH = 400;
+    const int BUFFER_LENGTH = 401;
     const int TOTAL_POINTS  = 362;
     int header_counter = 0;
     int packet_bytes_cnt = 0;
@@ -173,7 +173,7 @@ class FakeLidar:
         header = [0xAA, 0xBB, 0xCC, 0xDD]
         # I don't think that the status flags are used for anything..
         status = [0x00, 0x00]
-        rotation = [(rotation_period_ms & 0xFF00)>>8, rotation_period_ms & 0xFF]
+        rotation = [rotation_period_ms & 0xFF, (rotation_period_ms & 0xFF00)>>8]
         distances = []
         for dist in range(360):
             # Each lindar data point is 2 bytes

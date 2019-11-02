@@ -1,4 +1,4 @@
-"(rotation_period_ms & 0xFF00)>>8""
+"""
     Lidar Packet Info:
         This data protocol is used by "lidar4_main_code" firmware. Single data packet consists of parts:
 
@@ -214,13 +214,40 @@ def get_serial_device(device, baud, timeout, mock):
 def close_device(device):
     pass
 
+def remove_header(lidar_data):
+    """    first 4 bytes are header data [aa, bb, cc, dd]
+    """
+    return lidar_data[4:]
+
+def remove_status(lidar_data):
+    """    bytes 5 and 6 are status data, we check if the header is removed first
+    """
+    if all([[b'aa', b'bb', b'cc', b'dd'][ii] == lidar_data[ii] for ii in range(3)]):
+        # The header is still there, we remove the header too
+        return lidar_data[6:]
+    return lidar_data[2:]
+
+def swap_endianness(lidar_data):
+    """    each word is 2 bytes long.. so this swap function is specific to this system
+    """
+    out = []
+    for ii in range(0, len(lidar_data), 2):
+        out.append(lidar_data[ii+1])
+        out.append(lidar_data[ii])
+    return bytes(out)
+
+
 def lidar_main(args):
     # Eventually I think we will have to add windows support
     device = get_serial_device(args.device, args.baud, args.serial_timeout, args.mock)
     try:
         # Just continually read from UART and move data to our buffer
         while running:
-            queue_data(get_data(device))
+            lidar_data = get_data(device)
+            lidar_data = remove_header(lidar_data)
+            lidar_data = remove_status(lidar_data)
+            lidar_data = swap_endianness(lidar_data)
+            queue_data(lidar_data)
     finally:
         close_device(device)
 
@@ -256,7 +283,7 @@ def socket_main(args):
             to_send = get_data_from_buffer()
 
             if args.debug:
-                print("Sending {!r}".format(to_send))
+                print("Sending {} bytes {!r}".format(len(to_send), to_send))
 
             conn.sendall(to_send)
 

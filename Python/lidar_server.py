@@ -227,6 +227,14 @@ def remove_status(lidar_data):
         return lidar_data[6:]
     return lidar_data[2:]
 
+def remove_rotation(lidar_data):
+    """    bytes 5 and 6 are status data, we check if the header is removed first
+    """
+    if all([[b'aa', b'bb', b'cc', b'dd'][ii] == lidar_data[ii] for ii in range(3)]):
+        # The header is still there, we remove the header too
+        return lidar_data[8:]
+    return lidar_data[2:]
+
 def swap_endianness(lidar_data):
     """    each word is 2 bytes long.. so this swap function is specific to this system
     """
@@ -236,7 +244,15 @@ def swap_endianness(lidar_data):
         out.append(lidar_data[ii])
     return bytes(out)
 
+def convert_to_byte_string(b):
+    l = []
+    sl = [hex(b[ii])[2:].rjust(2, '0') for ii in range(len(b))]
+    for e in sl:
+        for c in e:
+            l.append(c)
+    return bytes([ord(c) for c in l])
 
+import string
 def lidar_main(args):
     # Eventually I think we will have to add windows support
     device = get_serial_device(args.device, args.baud, args.serial_timeout, args.mock)
@@ -246,8 +262,12 @@ def lidar_main(args):
             lidar_data = get_data(device)
             lidar_data = remove_header(lidar_data)
             lidar_data = remove_status(lidar_data)
+            lidar_data = remove_rotation(lidar_data)
+            
             lidar_data = swap_endianness(lidar_data)
+            lidar_data = convert_to_byte_string(lidar_data)
             queue_data(lidar_data)
+            #queue_data(bytes([ord(c) for c in list(string.ascii_lowercase)]))
     finally:
         close_device(device)
 

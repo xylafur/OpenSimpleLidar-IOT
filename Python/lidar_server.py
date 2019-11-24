@@ -18,10 +18,12 @@
 #   Shared variables and such.  These are used by both threads
 ###############################################################################
 import queue
+import serial
 
 data_queue = queue.Queue()
 
 running = True
+EXPECTED_PACKET_LENGTH = 728
 
 def get_data_from_buffer():
     """
@@ -36,83 +38,6 @@ def get_data_from_buffer():
 ###############################################################################
 #   Functions to read from LIDAR
 ###############################################################################
-"""
-    const int BUFFER_LENGTH = 401;
-    const int TOTAL_POINTS  = 362;
-    int header_counter = 0;
-    int packet_bytes_cnt = 0;
-    byte prev_byte  = 0;
-    public int total_packets = 0;
-    
-    //number of buffers
-    int cur_write_buf = 0;
-    int cur_read_buf = 1;
-    
-    public bool data_pending = false;//new data available
-    
-    int[] rx_data0 = new int[BUFFER_LENGTH];
-    int[] rx_data1 = new int[BUFFER_LENGTH];
- 
-    public bool process_received_data(byte[] data, int length)
-    {
-        int i;
-        byte cur_byte = 0;
-        int cur_word = 0;
-        bool new_packet = false;
-        
-        for (i=0;i<length;i++)
-        {
-            cur_byte = data[i];
-            
-            if (header_counter == 4)//first byte of new packet
-            {
-                //System.Diagnostics.Debug.WriteLine("leng: " + packet_bytes_cnt.ToString());
-                packet_bytes_cnt = 0;
-                header_counter = 0;
-                total_packets++;
-            }
-            else // make sure that we get the 4 header bytes in order
-            {
-                switch (cur_byte)
-                {
-                    case 170:  {header_counter = 1; break;}//65 - start
-                    case 187:  {header_counter = (header_counter == 1)? header_counter+1:  0; break;}
-                    case 204:  {header_counter = (header_counter == 2)? header_counter+1:  0; break;}
-                    case 221:  {header_counter = (header_counter == 3)? header_counter+1:  0; break;}
-                }
-                packet_bytes_cnt++;
-            }
-            
-            if ((packet_bytes_cnt % 2) == 1)//second byte of word received
-            {
-                int word_position = packet_bytes_cnt/2;
-                cur_word = ((int)cur_byte*256) + (int)prev_byte;//new word found
-                //System.Diagnostics.Debug.WriteLine("word: " + cur_word.ToString());
-                if (word_position < TOTAL_POINTS) 
-                {
-                    if (cur_write_buf == 0) 
-                        rx_data0[word_position] = cur_word;
-                    else 
-                        rx_data1[word_position] = cur_word;
-                }
-            }
-            
-            if (packet_bytes_cnt == (TOTAL_POINTS*2))
-            {
-                new_packet = true;
-                data_pending = true;
-                cur_read_buf^=1;
-                cur_write_buf^=1;
-            }
-                
-            
-            prev_byte = cur_byte;
-        }//end of for
-        return new_packet;
-    }//end of "process_received_data"
-"""
- 
-
 # I think this has something to do with the resolution of the sensor or soemthing..... no
 # documentation in his C# code, so I'll have to go look it up
 LIDAR_MAGIC = 16383
@@ -187,17 +112,21 @@ class FakeLidar:
         self.current_reading += 1
         return self.generate_circle()
 
+    def close(self):
+        print("Closing mock lidar!")
+
 def generate_mock_lidar_data(device):
     return device.read()
  
-def read_data_from_uart(device):
+def read_data_from_uart(device, _bytes=EXPECTED_PACKET_LENGTH):
     """
         - In linux the terminal driver will buffer input even if the device it is not opened
             - this means we should just be able to read from where we last read in linux
     """
-    pass
+    data = device.read(_bytes)
+    return data
 
-def get_data(device, mock=True):
+def get_data(device, mock=False):
     return generate_mock_lidar_data(device) if mock else read_data_from_uart(device)
 
 def queue_data(data):
@@ -208,11 +137,11 @@ def get_serial_device(device, baud, timeout, mock):
         set up and open the given serial device so that it is read to be used
     """
     if mock:
-        return FakeLidar(device, baud, timeout)
-    raise NotImplementedError("Currently only support MockLidar!")
+        return FakeLidar(device, baud, timeout=timeout)
+    return serial.Serial(device, baud, timeout=timeout)
 
 def close_device(device):
-    pass
+    device.close()
 
 def remove_header(lidar_data):
     """    first 4 bytes are header data [aa, bb, cc, dd]
@@ -259,7 +188,12 @@ def lidar_main(args):
     try:
         # Just continually read from UART and move data to our buffer
         while running:
-            lidar_data = get_data(device)
+            lidar_data = get_data(device, mock=args.mock)
+            if len(lidar_data) < EXPECTED_PACKET_LENGTH:
+                print("Packet from lidar is too small!  Only got {} bytes".format(len(lidar_data)))
+                print(" Data: {}".format(lidar_data))
+                continue
+
             lidar_data = remove_header(lidar_data)
             lidar_data = remove_status(lidar_data)
             lidar_data = remove_rotation(lidar_data)

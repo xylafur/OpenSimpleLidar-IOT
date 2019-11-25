@@ -13,9 +13,10 @@ def convert_from_bytes(obj):
     """
     return obj.decode('utf-8')
 
-TCP_IP = '127.0.0.1'
+#TCP_IP = '192.168.0.101'
+TCP_IP = 'localhost'
 TCP_PORT = 5005
-BUFFER_SIZE = 4096
+BUFFER_SIZE = 1500
 MESSAGE = "Hello World!"
 
 data = None
@@ -23,10 +24,12 @@ data = None
 # As a client we need to connect our socket to an existing address
 
 while 1:
-
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    print("Connecting")
     s.connect((TCP_IP, TCP_PORT))
     try:
+        print("Connected")
+        #s.sendall(b'Hello, world')
         data = s.recv(BUFFER_SIZE)
         print("Got data: {!r}".format(data))
         print("{} bytes".format(len(data)))

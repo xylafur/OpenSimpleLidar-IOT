@@ -1,0 +1,21 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
+!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
+!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
+!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
+!_TAG_PROGRAM_VERSION	0.0.0	/3fdf28bc/
+COMPONENT_ADD_INCLUDEDIRS	CMakeLists.txt	/^set(COMPONENT_ADD_INCLUDEDIRS ".")$/;"	v
+COMPONENT_SRCS	CMakeLists.txt	/^set(COMPONENT_SRCS "tcp_server.c")$/;"	v
+EXAMPLE_WIFI_PASS	tcp_server.c	/^#define EXAMPLE_WIFI_PASS /;"	d	file:
+EXAMPLE_WIFI_SSID	tcp_server.c	/^#define EXAMPLE_WIFI_SSID /;"	d	file:
+IPV4_GOTIP_BIT	tcp_server.c	/^const int IPV4_GOTIP_BIT = BIT0;$/;"	v	typeref:typename:const int
+IPV6_GOTIP_BIT	tcp_server.c	/^const int IPV6_GOTIP_BIT = BIT1;$/;"	v	typeref:typename:const int
+PORT	tcp_server.c	/^#define PORT /;"	d	file:
+TAG	tcp_server.c	/^static const char *TAG = "example";$/;"	v	typeref:typename:const char *	file:
+app_main	tcp_server.c	/^void app_main()$/;"	f	typeref:typename:void
+event_handler	tcp_server.c	/^static esp_err_t event_handler(void *ctx, system_event_t *event)$/;"	f	typeref:typename:esp_err_t	file:
+initialise_wifi	tcp_server.c	/^static void initialise_wifi(void)$/;"	f	typeref:typename:void	file:
+tcp_server_task	tcp_server.c	/^static void tcp_server_task(void *pvParameters)$/;"	f	typeref:typename:void	file:
+wait_for_ip	tcp_server.c	/^static void wait_for_ip()$/;"	f	typeref:typename:void	file:
+wifi_event_group	tcp_server.c	/^static EventGroupHandle_t wifi_event_group;$/;"	v	typeref:typename:EventGroupHandle_t	file:

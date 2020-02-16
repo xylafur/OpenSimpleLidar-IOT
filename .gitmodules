@@ -1,0 +1,3 @@
+[submodule "OpenSimpleLidar"]
+	path = OpenSimpleLidar
+	url = https://github.com/iliasam/OpenSimpleLidar.git
